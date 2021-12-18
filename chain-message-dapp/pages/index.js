@@ -5,23 +5,27 @@ import Inbox from "../components/Inbox";
 import Navbar from "../components/Navbar"
 import MessagePurchase from "../components/MessagePurchase";
 
+function Header() {
+    return (<Head>
+        <meta charSet="utf-8"/>
+        <link rel="icon" href="./favicon.ico"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <meta name="theme-color" content="#000000"/>
+        <meta
+            name="description"
+            content="Dapp for chain message."
+        />
+        <link rel="apple-touch-icon" href="./logo192.png"/>
+        <link rel="manifest" href="./manifest.json"/>
+
+        <title>Chain Message</title>
+    </Head>);
+}
+
 function Home() {
     return (
         <div>
-            <Head>
-                <meta charSet="utf-8"/>
-                <link rel="icon" href="./favicon.ico"/>
-                <meta name="viewport" content="width=device-width, initial-scale=1"/>
-                <meta name="theme-color" content="#000000"/>
-                <meta
-                    name="description"
-                    content="Dapp for chain message."
-                />
-                <link rel="apple-touch-icon" href="./logo192.png"/>
-                <link rel="manifest" href="./manifest.json"/>
-
-                <title>Chain Message</title>
-            </Head>
+            <Header/>
             <div className="bg-gray-200 h-full">
                 <div className="body text-gray-100 pt-16">
                     <Navbar/>
