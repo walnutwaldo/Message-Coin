@@ -1,5 +1,7 @@
 const SET_ACCOUNTS = 'SET_ACCOUNTS'
 
+export const defaultAccounts = [];
+
 export function setAccounts(accounts) {
     return {
         type: SET_ACCOUNTS,
@@ -7,7 +9,9 @@ export function setAccounts(accounts) {
     }
 }
 
-const defaultAccounts = [];
+export function initAccounts() {
+    return setAccounts(defaultAccounts);
+}
 
 function accounts(state=defaultAccounts, action) {
     switch (action.type) {

@@ -1,14 +1,18 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
-import {ReactComponent as MetamaskIcon} from "./icons/metamask.svg";
 
-import {setAccounts} from "./redux/accounts/accounts";
+import {setAccounts} from "../store/accounts/accounts";
 
 import Modal from "./Modal";
 
+import MetamaskIcon from '../public/icons/metamask.svg';
+
 import MetaMaskOnboarding from '@metamask/onboarding';
 
-const metaMaskOnboarding = new MetaMaskOnboarding();
+let metaMaskOnboarding;
+function setMetaMaskOnboarding() {
+    metaMaskOnboarding = new MetaMaskOnboarding();
+}
 
 class Button extends Component {
 
@@ -36,33 +40,44 @@ class WalletConnectModal extends Component {
         }
     }
 
+    componentDidMount() {
+        if (!metaMaskOnboarding) {
+            setMetaMaskOnboarding();
+        }
+    }
+
     setModalScreen(value) {
         this.setState(() => ({
             modalScreen: value
         }));
     }
 
-    async tryConnectMetamask(onHide, setAccounts) {
+    tryConnectMetamask(onHide) {
+        if (!metaMaskOnboarding) return;
         if (!MetaMaskOnboarding.isMetaMaskInstalled()) {
             this.setModalScreen("Install Metamask");
         } else {
-            const {ethereum} = window;
-            try {
-                const accounts = await ethereum.request({method: 'eth_requestAccounts'});
-                setAccounts(accounts);
-                onHide();
-            } catch (error) {
-                console.error(error);
+            if (window) {
+                const {ethereum} = window;
+                try {
+                    ethereum.request({method: 'eth_requestAccounts'}).then(accounts => {
+                        this.props.setAccounts(accounts);
+                        onHide();
+                    })
+                } catch (error) {
+                    console.error(error);
+                }
             }
         }
     }
 
     installMetamask() {
+        if (!metaMaskOnboarding) return;
         metaMaskOnboarding.startOnboarding();
     }
 
     render() {
-        const {show, onHide, setAccounts} = this.props;
+        const {show, onHide} = this.props;
         const {modalScreen} = this.state;
 
         return (
@@ -76,9 +91,9 @@ class WalletConnectModal extends Component {
             } onBack={
                 () => this.setModalScreen("")
             }>
-                <ul>
+                {<ul>
                     {!modalScreen && (<li>
-                        <Button onClick={() => this.tryConnectMetamask(onHide, setAccounts)}>
+                        <Button onClick={() => this.tryConnectMetamask(onHide)}>
                             <MetamaskIcon className="inline mr-4 w-8 h-8"/> Metamask
                         </Button>
                     </li>)
@@ -88,7 +103,7 @@ class WalletConnectModal extends Component {
                             <MetamaskIcon className="inline mr-4 w-8 h-8"/> Install Metamask
                         </Button>
                     </li>}
-                </ul>
+                </ul>}
             </Modal>
         )
     }
