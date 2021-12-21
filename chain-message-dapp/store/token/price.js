@@ -13,12 +13,6 @@ export function setPrice(price) {
     }
 }
 
-export function initPrice() {
-    return {
-        type: SET_DEFAULT_PRICE
-    }
-}
-
 function price(state=defaultPrice, action) {
     switch (action.type) {
         case SET_DEFAULT_PRICE:

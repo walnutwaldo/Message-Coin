@@ -2,6 +2,8 @@ import {createStore, applyMiddleware, combineReducers} from 'redux';
 import accounts, {defaultAccounts} from './accounts/accounts';
 import balance, {defaultBalance} from './accounts/balance';
 import price, {defaultPrice} from './token/price';
+import provider, {defaultProvider} from './provider/provider';
+import signer, {defaultSigner} from './provider/signer';
 
 import thunkMiddleware from 'redux-thunk'
 
@@ -18,13 +20,17 @@ const bindMiddleware = (middleware) => {
 const combinedReducer = combineReducers({
     accounts,
     balance,
-    price
+    price,
+    provider,
+    signer
 });
 
 const initialState = {
     accounts: defaultAccounts,
     balance: defaultBalance,
-    price: defaultPrice
+    price: defaultPrice,
+    provider: defaultProvider,
+    signer: defaultSigner
 }
 
 function rootReducer(state = initialState, action) {

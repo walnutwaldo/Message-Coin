@@ -9,10 +9,6 @@ export function setAccounts(accounts) {
     }
 }
 
-export function initAccounts() {
-    return setAccounts(defaultAccounts);
-}
-
 function accounts(state=defaultAccounts, action) {
     switch (action.type) {
         case SET_ACCOUNTS:

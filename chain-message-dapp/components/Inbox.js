@@ -1,16 +1,6 @@
 import React, {Component} from 'react';
-
-const myMessages = [{
-    id: "0x12312312",
-    from: "0xdspi29dfda",
-    message: "This is a test.",
-    time: Date.now() / 1000 - 24 * 60 * 60
-}, {
-    id: "0x331412",
-    from: "0xhi01293df",
-    message: "This is a test too.",
-    time: Date.now() / 1000 - 100 * 60 * 60
-}];
+import {connect} from "react-redux";
+import {abbreviateAddress} from "../utils/addressTools";
 
 const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
@@ -26,9 +16,27 @@ class Inbox extends Component {
 
     constructor(props) {
         super(props);
+        this.state = {
+            messages: []
+        }
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        const {signer} = this.props;
+        if (signer && !prevProps.signer) {
+            const filter = signer.messageCoinContract.filters.Message(null, signer.address);
+            signer.messageCoinContract.queryFilter(filter).then((messages) => {
+                console.log(messages);
+                this.setState({
+                    messages: messages
+                });
+            });
+        }
     }
 
     render() {
+        const {messages} = this.state;
+
         return (<div className={this.props.className}>
             <div className="text-white block bg-gray-700 w-full py-2 px-4 rounded-md flex justify-between">
             <span className="font-semibold">
@@ -39,22 +47,37 @@ class Inbox extends Component {
             </span>
             </div>
             <ul className="width-full">
-                {myMessages.map((message) => (
-                    <li key={message.id}>
+                {messages.map((message) => {
+                    const id = message.transactionHash;
+                    const [from, to, timeStamp, content] = message.args;
+                    const time = timeStamp ? dateString(timeStamp) : "Jan 1, 2022";
+                    return (
+                    <li key={id}>
                         <button
-                            className="text-black block bg-white shadow w-full py-2 px-4 flex justify-between rounded-md my-2 hover:bg-gray-100">
-                        <span>
-                            <span className="font-semibold mr-4">From: {message.from.substr(0, 6)}</span>
-                            <span>{message.message}</span>
-                        </span>
-                            <span className="space-x-1">{dateString(message.time)}</span>
+                            className="text-black block bg-white shadow w-full py-2 px-4 rounded-md my-2 hover:bg-gray-100">
+                            <div className="flex justify-between">
+                                <span className="text-left font-semibold mr-4">From: {abbreviateAddress(from)}</span>
+                                <span className="text-right space-x-1">{time}</span>
+                            </div>
+                            <div className="w-full text-left text-gray-500 text-sm">
+                                <span className="text-left">{content}</span>
+                            </div>
                         </button>
                     </li>
-                ))}
+                )})}
             </ul>
         </div>)
     }
 
 }
 
-export default Inbox;
+const mapStateToProps = (state) => ({
+    signer: state.signer
+});
+
+const mapDispatchToProps = (dispatch) => ({
+
+});
+
+
+export default connect(mapStateToProps, mapDispatchToProps)(Inbox);

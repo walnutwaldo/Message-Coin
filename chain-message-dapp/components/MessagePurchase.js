@@ -1,15 +1,10 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
-import * as Constants from './constants';
 import {setMessagesBalance, setEthBalance} from "../store/accounts/balance";
 import {setPrice} from "../store/token/price";
+import {updateSigner} from "../store/provider/signer";
 import {ethers, BigNumber} from 'ethers';
 import Modal from './Modal';
-
-let provider;
-function setProvider() {
-    provider = new ethers.providers.Web3Provider(window.ethereum);
-}
 
 function formatEth(amt) {
     return (Number(amt) / (1e18)).toFixed(6);
@@ -49,58 +44,38 @@ class MessagePurchase extends Component {
         }
     }
 
-    componentDidMount() {
-        if (!provider) {
-            setProvider();
-        }
-
-        provider.listAccounts().then((accounts) => {
-            if (accounts.length > 0) {
-                this.updateSigner(accounts[0]);
-                this.updateMessagesBalance(accounts[0]);
-                this.updateEthBalance(accounts[0]);
-                this.updatePrice();
-            }
-        });
-    }
-
-    updateSigner(account) {
-        if (!provider) return;
-        this.signer = provider.getSigner(account);
-        this.messageCoinContract = new ethers.Contract(Constants.MESSAGE_COIN_CONTRACT_ADDRESS, Constants.MESSAGE_COIN_ABI, this.signer);
-    }
-
     updateMessagesBalance(account) {
-        if (!this.messageCoinContract) return;
-        this.messageCoinContract.balanceOf(account).then((balance) => {
+        if (!this.props.signer) return;
+        const {messageCoinContract} = this.props.signer;
+
+        if (!messageCoinContract) return;
+        messageCoinContract.balanceOf(account).then((balance) => {
             this.props.setMessagesBalance(balance.toString());
         });
     }
 
     updateEthBalance(account) {
+        const {provider} = this.props;
         provider.getBalance(account).then((balance) => {
             this.props.setEthBalance(balance.toString());
         })
     }
 
     updatePrice() {
-        if (!this.messageCoinContract) return;
-        this.messageCoinContract.cost().then((price) => {
+        if (!this.props.signer) return;
+        const {messageCoinContract} = this.props.signer;
+
+        messageCoinContract.cost().then((price) => {
             this.props.setPrice(price.toNumber());
         });
     }
 
     componentDidUpdate(prevProps, prevState) {
-        const {accounts} = this.props;
-        const prevAccounts = prevProps.accounts;
+        const {accounts, signer} = this.props;
 
-        if ((prevAccounts.length > 0) !== (accounts.length > 0) || prevProps.accounts[0] !== accounts[0]) {
-            this.updateSigner(accounts[0]);
+        if (signer && !prevProps.signer) {
             this.updateMessagesBalance(accounts[0]);
             this.updateEthBalance(accounts[0]);
-        }
-        if (!this.props.price.priceSet && accounts.length > 0) {
-            this.updateSigner(accounts[0]);
             this.updatePrice();
         }
     }
@@ -115,14 +90,14 @@ class MessagePurchase extends Component {
 
     buyMessages() {
         const { purchaseAmount } = this.state;
-        const { price } = this.props;
+        const { price, signer } = this.props;
 
         if (Number(purchaseAmount) === 0) {
             this.setState({errorString: "Invalid purchase amount."});
         } else {
             const value = BigNumber.from(price.price).mul(BigNumber.from(purchaseAmount));
             this.setState({ buying: true, errorString: "" });
-            this.messageCoinContract.mint(purchaseAmount, { value: value }).then(() => {
+            signer.messageCoinContract.mint(purchaseAmount, { value: value }).then(() => {
 
                 // A bit of an assumption but its probably okay
                 const newMessagesBalance = BigNumber.from(this.props.balance.messages).add(BigNumber.from(purchaseAmount));
@@ -205,13 +180,7 @@ class MessagePurchase extends Component {
 
 }
 
-const mapStateToProps = (state) => (
-{
-    accounts: state.accounts,
-    balance: state.balance,
-    price: state.price
-}
-);
+const mapStateToProps = state => state;
 
 const mapDispatchToProps = (dispatch) => (
 {

@@ -13,6 +13,8 @@ contract MessageCoin is ERC20, Ownable {
 
     uint public cost;
 
+    event Message(address indexed from, address indexed to, uint indexed timestamp, string message);
+
     constructor(string memory name, string memory symbol) ERC20(name, symbol) Ownable() {
         _mint(msg.sender, 10 ** 12);
         cost = 1 ether / (10 ** 4);
@@ -43,6 +45,14 @@ contract MessageCoin is ERC20, Ownable {
 
     function destroy() public onlyOwner() {
         selfdestruct(payable(msg.sender));
+    }
+
+    // @notice The message should already be encrypted with the other person's public key
+    // if you don't want it to be publicly visible
+    function sendMessage(address to, string memory message) public {
+        require(address(msg.sender).balance > 0, "Insufficient message balance");
+        _transfer(_msgSender(), to, 1);
+        emit Message(address(msg.sender), to, block.timestamp, message);
     }
 
     receive() external payable {

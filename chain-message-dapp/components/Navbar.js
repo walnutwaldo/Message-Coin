@@ -2,8 +2,9 @@ import React, {Component} from 'react';
 import Link from 'next/link';
 import {connect} from 'react-redux';
 import {setAccounts} from '../store/accounts/accounts';
-
-import {ethers} from 'ethers';
+import {refreshProvider} from "../store/provider/provider";
+import {updateSigner} from "../store/provider/signer";
+import {abbreviateAddress} from "../utils/addressTools";
 
 import WalletConnectModal from "./WalletConnectModal";
 
@@ -38,10 +39,6 @@ class ConnectToWalletButton extends Component {
 
 }
 
-function abbreviateAddress(addr) {
-    return addr.substring(0, 6) + "..." + addr.substr(addr.length - 4, 4);
-}
-
 class Navbar extends Component {
 
     constructor(props) {
@@ -49,13 +46,17 @@ class Navbar extends Component {
     }
 
     componentDidMount() {
-        const {ethereum} = window;
-        if (ethereum) {
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            provider.listAccounts().then((accounts) => {
-                this.props.setAccounts(accounts);
-            });
+        let {provider, refreshProvider, updateSigner, setAccounts} = this.props;
+        if (!provider) {
+            provider = refreshProvider();
         }
+
+        provider.listAccounts().then((accounts) => {
+            setAccounts(accounts);
+            if (accounts.length > 0) {
+                updateSigner(provider, accounts[0]);
+            }
+        });
     }
 
     render() {
@@ -90,7 +91,9 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return ({
-        setAccounts: accounts => dispatch(setAccounts(accounts))
+        setAccounts: accounts => dispatch(setAccounts(accounts)),
+        updateSigner: (provider, account) => updateSigner(dispatch, provider, account),
+        refreshProvider: () => { return refreshProvider(dispatch) }
     });
 }
 
