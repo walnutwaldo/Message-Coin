@@ -2,13 +2,14 @@ import React, {Component} from 'react';
 import Link from 'next/link';
 import {connect} from 'react-redux';
 import {setAccounts} from '../store/accounts/accounts';
-import {refreshProvider} from "../store/provider/provider";
+import {setProvider} from "../store/provider/provider";
 import {updateSigner} from "../store/provider/signer";
 import {abbreviateAddress} from "../utils/addressTools";
 
 import WalletConnectModal from "./WalletConnectModal";
 
 import UserIcon from '../public/icons/user.svg';
+import {ethers} from "ethers";
 
 class ConnectToWalletButton extends Component {
 
@@ -26,15 +27,16 @@ class ConnectToWalletButton extends Component {
     }
 
     render() {
+        const {className} = this.props;
         const {show} = this.state;
 
-        return (<>
+        return (<div className={className}>
             <WalletConnectModal show={show} onHide={() => this.setShow(false)}/>
             <button className={"bg-gray-800 hover:bg-gray-700 disabled:bg-gray-900 text-gray-300 px-3 py-2 rounded-lg transition"}
                     onClick={() => this.setShow(true)}>
                 Connect to a Wallet
             </button>
-        </>)
+        </div>)
     }
 
 }
@@ -46,21 +48,27 @@ class Navbar extends Component {
     }
 
     componentDidMount() {
-        let {provider, refreshProvider, updateSigner, setAccounts} = this.props;
+        let {provider, setProvider, setAccounts} = this.props;
         if (!provider) {
-            provider = refreshProvider();
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            setProvider(provider);
+            provider.listAccounts().then((accounts) => {
+                setAccounts(accounts);
+            });
         }
+    }
 
-        provider.listAccounts().then((accounts) => {
-            setAccounts(accounts);
-            if (accounts.length > 0) {
-                updateSigner(provider, accounts[0]);
-            }
-        });
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        const { accounts, provider, signer, updateSigner } = this.props;
+
+        if (accounts.length > 0 && provider && (!signer || signer.address !== accounts[0] ) ) {
+            updateSigner(provider, accounts[0]);
+        }
     }
 
     render() {
         const {accounts} = this.props;
+        const account = accounts[0];
 
         return (<nav className="bg-gray-900 border-b border-gray-700 shadow-lg absolute top-0 left-0 right-0">
             <div className="max-w-6xl mx-auto px-4 flex justify-between">
@@ -72,10 +80,12 @@ class Navbar extends Component {
                     </Link>
                 </div>
                 <div className="hidden md:flex items-center space-x-1">
-                    {accounts.length ? <div className="inline-flex items-center bg-gray-800 text-gray-300 px-3 py-2 rounded-lg overflow-hidden">
+                    <div className={"inline-flex items-center bg-gray-800 text-gray-300 " +
+                    `px-3 py-2 rounded-lg overflow-hidden ${account ? "" : "hidden"}`}>
                         <UserIcon className="h-5 w-5 mr-2"/>
-                        {abbreviateAddress(accounts[0])}
-                    </div> : <ConnectToWalletButton/>}
+                        {abbreviateAddress(account || "")}
+                    </div>
+                    <ConnectToWalletButton className={account ? "hidden" : ""}/>
                 </div>
             </div>
         </nav>);
@@ -85,7 +95,8 @@ class Navbar extends Component {
 
 const mapStateToProps = (state) => {
     return {
-        accounts: state.accounts
+        accounts: state.accounts,
+        provider: state.provider
     }
 };
 
@@ -93,7 +104,7 @@ const mapDispatchToProps = (dispatch) => {
     return ({
         setAccounts: accounts => dispatch(setAccounts(accounts)),
         updateSigner: (provider, account) => updateSigner(dispatch, provider, account),
-        refreshProvider: () => { return refreshProvider(dispatch) }
+        setProvider: (provider) => { dispatch(setProvider(provider)) }
     });
 }
 

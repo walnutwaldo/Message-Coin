@@ -8,7 +8,7 @@ import PurchaseMessagesModal from "./modals/PurchaseMessagesModal";
 import SendMessageModal from "./modals/SendMessageModal";
 import {formatWithCommas} from "../utils/numberFormat";
 
-class MessagePurchase extends Component {
+class MessageSideCard extends Component {
 
     constructor(props) {
         super(props);
@@ -84,4 +84,4 @@ const mapDispatchToProps = (dispatch) => (
 }
 );
 
-export default connect(mapStateToProps, mapDispatchToProps)(MessagePurchase);
+export default connect(mapStateToProps, mapDispatchToProps)(MessageSideCard);

@@ -1,5 +1,3 @@
-import {ethers} from "ethers";
-
 const SET_PROVIDER = 'SET_PROVIDER'
 
 export const defaultProvider = null;
@@ -18,15 +16,6 @@ function provider(state=defaultProvider, action) {
         default:
             return state;
     }
-}
-
-export function refreshProvider(dispatch) {
-    if (!window) {
-        console.error("Error while refreshing provider: window does not exist");
-    }
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    dispatch(setProvider(provider));
-    return provider;
 }
 
 export default provider;
