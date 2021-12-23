@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 const jsonfile = require('jsonfile');
 
-const MESSAGE_COIN_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const MESSAGE_COIN_ADDRESS = "0xDd3b6fD2C80fCF7352C5B181c620cD773B9f3928";
 const MESSAGE_COIN_ABI = jsonfile.readFileSync("artifacts/contracts/MessageCoin.sol/MessageCoin.json").abi;
 
 async function sendMessageCoins(contract, address, amt) {
