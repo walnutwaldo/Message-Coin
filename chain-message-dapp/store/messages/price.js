@@ -1,5 +1,4 @@
 const SET_PRICE = 'SET_PRICE';
-const SET_DEFAULT_PRICE = 'SET_DEFAULT_PRICE';
 
 export const defaultPrice = {
     price: 0,
@@ -15,8 +14,6 @@ export function setPrice(price) {
 
 function price(state=defaultPrice, action) {
     switch (action.type) {
-        case SET_DEFAULT_PRICE:
-            return defaultPrice;
         case SET_PRICE:
             return {
                 price: action.price,

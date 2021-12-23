@@ -3,7 +3,7 @@ import {connect} from 'react-redux';
 
 import {setAccounts} from "../store/accounts/accounts";
 
-import Modal from "./Modal";
+import Modal from "./modals/Modal";
 
 import MetamaskIcon from '../public/icons/metamask.svg';
 
@@ -110,7 +110,7 @@ class WalletConnectModal extends Component {
 
 }
 
-const mapStateToProps = (state) => ({});
+const mapStateToProps = () => ({});
 const mapDispatchToProps = (dispatch) => ({
     setAccounts: (accounts) => dispatch(setAccounts(accounts))
 });
