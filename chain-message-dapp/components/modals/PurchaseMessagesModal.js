@@ -26,9 +26,20 @@ class PurchaseMessagesModal extends Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        const {signer} = this.props;
+        const {signer, setEthBalance} = this.props;
 
-        if (signer && !prevProps.signer) {
+        const signerRemoved = !signer && prevProps.signer;
+        if (signerRemoved) {
+            setEthBalance(0);
+            return;
+        }
+
+        const needUpdate = signer && (
+            !prevProps.signer ||
+            signer.address !== prevProps.signer.address
+        )
+
+        if (needUpdate) {
             this.updateEthBalance(signer.address);
             this.updatePrice();
         }

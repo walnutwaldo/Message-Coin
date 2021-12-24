@@ -1,7 +1,4 @@
 import React, {Component} from 'react';
-import {connect} from 'react-redux';
-
-import {setAccounts} from "../store/accounts/accounts";
 
 import Modal from "./modals/Modal";
 
@@ -57,11 +54,10 @@ class WalletConnectModal extends Component {
         if (!MetaMaskOnboarding.isMetaMaskInstalled()) {
             this.setModalScreen("Install Metamask");
         } else {
-            if (window) {
-                const {ethereum} = window;
+            if (window && window.ethereum) {
                 try {
-                    ethereum.request({method: 'eth_requestAccounts'}).then(accounts => {
-                        this.props.setAccounts(accounts);
+                    window.ethereum.request({method: 'eth_requestAccounts'}).then(() => {
+                        // Update of account variable is handled by Navbar listeners
                         onHide();
                     })
                 } catch (error) {
@@ -110,9 +106,4 @@ class WalletConnectModal extends Component {
 
 }
 
-const mapStateToProps = () => ({});
-const mapDispatchToProps = (dispatch) => ({
-    setAccounts: (accounts) => dispatch(setAccounts(accounts))
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(WalletConnectModal);
+export default WalletConnectModal;

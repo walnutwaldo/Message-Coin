@@ -3,13 +3,17 @@ import Link from 'next/link';
 import {connect} from 'react-redux';
 import {setAccounts} from '../store/accounts/accounts';
 import {setProvider} from "../store/provider/provider";
-import {updateSigner} from "../store/provider/signer";
+import {deleteSigner, updateSigner} from "../store/provider/signer";
+import {setChain} from "../store/provider/chain"
 import {abbreviateAddress} from "../utils/addressTools";
 
 import WalletConnectModal from "./WalletConnectModal";
 
 import UserIcon from '../public/icons/user.svg';
-import {ethers} from "ethers";
+import {BigNumber, ethers} from "ethers";
+import {VALID_CHAINS} from "./constants";
+
+import ConnectWalletEvent from "../events/connectWallet";
 
 class ConnectToWalletButton extends Component {
 
@@ -20,10 +24,20 @@ class ConnectToWalletButton extends Component {
         };
     }
 
-    setShow(newShow) {
-        this.setState(() => ({
-            show: newShow
-        }));
+    componentDidMount() {
+        ConnectWalletEvent.addListener(this.show.bind(this));
+    }
+
+    componentWillUnmount() {
+        ConnectWalletEvent.removeListener(this.show.bind(this));
+    }
+
+    show() {
+        this.setState({show: true});
+    }
+
+    hide() {
+        this.setState({show: false})
     }
 
     render() {
@@ -31,9 +45,10 @@ class ConnectToWalletButton extends Component {
         const {show} = this.state;
 
         return (<div className={className}>
-            <WalletConnectModal show={show} onHide={() => this.setShow(false)}/>
-            <button className={"bg-gray-800 hover:bg-gray-700 disabled:bg-gray-900 text-gray-300 px-3 py-2 rounded-lg transition"}
-                    onClick={() => this.setShow(true)}>
+            <WalletConnectModal show={show} onHide={this.hide.bind(this)}/>
+            <button
+                className={"bg-gray-800 hover:bg-gray-700 disabled:bg-gray-900 text-gray-300 px-3 py-2 rounded-lg transition"}
+                onClick={() => this.show.bind(this)}>
                 Connect to a Wallet
             </button>
         </div>)
@@ -45,24 +60,44 @@ class Navbar extends Component {
 
     constructor(props) {
         super(props);
+        this.state = {
+            chain: -1
+        }
     }
 
     componentDidMount() {
-        let {provider, setProvider, setAccounts} = this.props;
-        if (!provider) {
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
+        let {provider, setProvider, setAccounts, setChain} = this.props;
+        if (!provider && window.ethereum) {
+            const provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
             setProvider(provider);
             provider.listAccounts().then((accounts) => {
                 setAccounts(accounts);
             });
+            setChain(Number(window.ethereum.networkVersion))
+
+            // detect Metamask account change
+            window.ethereum.on('accountsChanged', function (accounts) {
+                setAccounts(accounts || []);
+            });
+
+            // detect Network account change
+            window.ethereum.on('chainChanged', function (networkId) {
+                setChain(BigNumber.from(networkId).toNumber())
+            }.bind(this));
         }
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        const { accounts, provider, signer, updateSigner } = this.props;
+        const {accounts, provider, signer, updateSigner, deleteSigner, chain} = this.props;
 
-        if (accounts.length > 0 && provider && (!signer || signer.address !== accounts[0] ) ) {
+        const validChain = VALID_CHAINS.includes(chain);
+        if (accounts.length > 0 && (signer || {address: null}).address !== accounts[0] && validChain) {
+            // Need to change account
             updateSigner(provider, accounts[0]);
+        } else if ((accounts.length === 0 || !validChain) && signer) {
+            // Need to remove the signer
+            deleteSigner();
+            console.log("deleted signer")
         }
     }
 
@@ -93,18 +128,17 @@ class Navbar extends Component {
 
 }
 
-const mapStateToProps = (state) => {
-    return {
-        accounts: state.accounts,
-        provider: state.provider
-    }
-};
+const mapStateToProps = (state) => state;
 
 const mapDispatchToProps = (dispatch) => {
     return ({
         setAccounts: accounts => dispatch(setAccounts(accounts)),
         updateSigner: (provider, account) => updateSigner(dispatch, provider, account),
-        setProvider: (provider) => { dispatch(setProvider(provider)) }
+        deleteSigner: () => dispatch(deleteSigner()),
+        setProvider: (provider) => {
+            dispatch(setProvider(provider))
+        },
+        setChain: (chain) => dispatch(setChain(chain))
     });
 }
 

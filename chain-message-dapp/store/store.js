@@ -3,12 +3,23 @@ import accounts, {defaultAccounts} from './accounts/accounts';
 import balance, {defaultBalance} from './accounts/balance';
 import price, {defaultPrice} from './messages/price';
 import provider, {defaultProvider} from './provider/provider';
+import chain, {defaultChain} from './provider/chain';
 import signer, {defaultSigner} from './provider/signer';
 import messages, {defaultMessages} from './messages/messages';
 
 import thunkMiddleware from 'redux-thunk'
 
 import { createWrapper, HYDRATE } from 'next-redux-wrapper';
+
+const combinedReducer = combineReducers({
+    accounts,
+    balance,
+    price,
+    provider,
+    signer,
+    messages,
+    chain
+});
 
 const bindMiddleware = (middleware) => {
     if (process.env.NODE_ENV !== 'production') {
@@ -18,22 +29,14 @@ const bindMiddleware = (middleware) => {
     return applyMiddleware(...middleware)
 }
 
-const combinedReducer = combineReducers({
-    accounts,
-    balance,
-    price,
-    provider,
-    signer,
-    messages
-});
-
 const initialState = {
     accounts: defaultAccounts,
     balance: defaultBalance,
     price: defaultPrice,
     provider: defaultProvider,
     signer: defaultSigner,
-    messages: defaultMessages
+    messages: defaultMessages,
+    chain: defaultChain
 }
 
 function rootReducer(state = initialState, action) {

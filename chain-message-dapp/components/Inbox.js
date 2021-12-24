@@ -4,7 +4,7 @@ import {abbreviateAddress} from "../utils/addressTools";
 
 import CopyIcon from "../public/icons/copy.svg";
 import CheckIcon from "../public/icons/check.svg";
-import {setMessages} from "../store/messages/messages";
+import {setMessages, clearMessages} from "../store/messages/messages";
 
 const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
@@ -88,9 +88,16 @@ class Inbox extends Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        const {signer, setMessages} = this.props;
+        const {signer, setMessages, clearMessages} = this.props;
 
-        if (signer && !prevProps.signer) {
+        const signerRemoved = !signer && prevProps.signer;
+        if (signerRemoved) {
+            clearMessages();
+            return;
+        }
+
+        const needUpdate = signer && (!prevProps.signer || signer.address !== prevProps.signer.address)
+        if (needUpdate) {
             const filter = signer.messageCoinContract.filters.Message(null, signer.address);
             signer.messageCoinContract.queryFilter(filter).then((messages) => {
                 setMessages(messages.reverse());
@@ -103,15 +110,15 @@ class Inbox extends Component {
 
         return (<div className={this.props.className}>
             <div className="text-white block bg-gray-700 w-full py-2 px-4 rounded-md flex justify-between">
-            <span className="font-semibold">
-                Inbox
-            </span>
-                <span className="space-x-1">
-                Date
-            </span>
+                <span className="font-semibold">
+                    Inbox
+                </span>
+                    <span className="space-x-1">
+                    Date
+                </span>
             </div>
+            {messages.length === 0 && <EmptyInboxDisplay/>}
             <ul className="width-full">
-                {messages.length === 0 && <EmptyInboxDisplay/>}
                 {messages.map((message) => {
                     const id = message.transactionHash;
 
@@ -131,7 +138,8 @@ const mapStateToProps = (state) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-    setMessages: (messages) => dispatch(setMessages(messages))
+    setMessages: (messages) => dispatch(setMessages(messages)),
+    clearMessages: () => dispatch(clearMessages())
 });
 
 
